@@ -1,8 +1,18 @@
 import { BATTLE_ASSET_KEYS, BATTLE_BACKGROUND_ASSET_KEYS, HEALTH_BAR_ASSET_KEYS, MONSTER_ASSET_KEYS } from "../../assets/asset-key.js";
 import Phaser from "../lib/phaser.js";
+import { BattleMenu } from "../battle/ui/menu/battle-menu.js";
 import { SCENE_KEY } from "./scene-key.js";
+import { DIRECTION } from "../Common/direction.js";
+
+
 
 export class BattleScene extends Phaser.Scene{
+    /**@type {BattleMenu} */
+    #battleMenu;
+
+    /**@type {Phaser.Types.Input.Keyboard.CursorKeys} */
+    #cursorsKey;
+
     constructor(){
         super({
             key: SCENE_KEY.BATTLE_SCENE,
@@ -91,9 +101,51 @@ export class BattleScene extends Phaser.Scene{
                 fontStyle: 'italic',
             }).setOrigin(1,0),
         ]);
+        this.#battleMenu = new BattleMenu(this);
+        // this.#battleMenu.showMainBattleMenu();
+
+        this.#cursorsKey = this.input.keyboard.createCursorKeys();
+        
+    }
+
+    update(){
+        const wasSpaceKeyPressed = Phaser.Input.Keyboard.JustDown(this.#cursorsKey.space); 
+        if(wasSpaceKeyPressed){
+            this.#battleMenu.handlePlayerInput('OK');
+            return; 
+        }
+
+        if(Phaser.Input.Keyboard.JustDown(this.#cursorsKey.shift)){
+            this.#battleMenu.handlePlayerInput('CANCEL');
+            return;
+        }
+        /** @type {import ( '../Common/direction.js').Direction} */
+        let selectedDirection = DIRECTION.NONE;
+
+        if(this.#cursorsKey.left.isDown){
+            selectedDirection = DIRECTION.LEFT;
+        } else if(this.#cursorsKey.right.isDown){
+            selectedDirection = DIRECTION.RIGHT;
+        } else if(this.#cursorsKey.up.isDown){          
+            selectedDirection = DIRECTION.UP;
+        } else if(this.#cursorsKey.down.isDown){
+            selectedDirection = DIRECTION.DOWN;
+        }
+
+        if(selectedDirection !== DIRECTION.NONE){
+            this.#battleMenu.handlePlayerInput(selectedDirection); 
+        }
     }
 
     // create a health bar
+
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} value 
+     * @returns {Phaser.GameObjects.Container}
+     */
     #createHealthBar(x, y, value) {
 
         const scaleY = 0.7
@@ -107,5 +159,6 @@ export class BattleScene extends Phaser.Scene{
 
         return this.add.container(x, y, [leftcap, middle,rightcap]);
     }
+
 
 }
